@@ -1,0 +1,60 @@
+function autoFillGoogleDocFromForm(e) {
+  //e.values is an array of form values
+  var timestamp = e.values[0];
+  var DocID = e.values[1];
+  var Date = e.values[2];
+  var NextYear = e.values[3];
+  var Department = e.values[4];
+  var Location = e.values[5];
+  var DocName = e.values[6];
+  var image = e.values [7];
+  var Filled = e.values [8];
+  
+  
+  //file is the template file, and you get it by ID
+  var file = DriveApp.getFileById('1p7wX8LzlzJenVTnK-4nzSIh5XJyo4lGpLu7JkXMuWrs'); 
+  
+  //Make  Copy of the template here and tell it where to be stored.
+  //file.makeCopy will return a Google Drive file object 
+  var folder = DriveApp.getFolderById('1C2ZEAkKt6CX3yeWZLYVInpn3R12w7lDp')
+  var copy = file.makeCopy(Department + ',' + DocID, folder); 
+  
+  //Once we've got the new file created, we need to open it as a document by using its ID
+  var doc = DocumentApp.openById(copy.getId()); 
+  
+  //Since everything we need to change is in the body, we need to get that
+  var body = doc.getBody(); 
+  var header = doc.getHeader();
+  
+var replaceTextToImage = function(body, searchText, fileId) {
+  var width = 600; // Please set this.
+  var blob = DriveApp.getFileById(fileId).getBlob();
+  var r = body.findText(searchText).getElement();
+  r.asText().setText("");
+  var img = r.getParent().asParagraph().insertInlineImage(0, blob);
+  var w = img.getWidth();
+  var h = img.getHeight();
+  img.setWidth(width);
+  img.setHeight(width * h / w);
+}
+
+// Get the image fileID
+  var image = e.values[7]; // 1 being the row number in which the link to the uploaded image is
+  var imageID = String(image).split("=")[7]; //gives you the fileID of the uploaded image
+
+// Use the function replaceTextToImage
+  replaceTextToImage(body, '{{image}}', imageID); // replaces the {{image}} tag with the uploaded image
+  
+  //Then we call all of our replaceText methods
+  header.replaceText('<<DOCNUM>>', DocID);
+  header.replaceText('<<DATE>>', Date);
+  header.replaceText('<<Next Year>>', NextYear);
+  body.replaceText('<<Location>>', Location); 
+  body.replaceText('<<Department>>', Department);  
+  body.replaceText('<<Please put text here>>', Filled); 
+ 
+   
+  
+  //Lastly we save and close the document to persist our changes
+  doc.saveAndClose(); 
+}
